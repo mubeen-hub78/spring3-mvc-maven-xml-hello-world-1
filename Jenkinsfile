@@ -8,7 +8,7 @@ pipeline {
     }
 
     tools {
-        maven "Maven"
+        maven "Maven" // This "Maven" must match the name configured in Jenkins > Global Tool Configuration
     }
 
     environment {
@@ -32,7 +32,8 @@ pipeline {
             steps {
                 script {
                     if (params.mvn_build) {
-                        sh '/usr/share/maven/bin/mvn -Dmaven.test.failure.ignore clean package'
+                        // Removed hardcoded path, relying on Jenkins 'tools' definition to set PATH
+                        sh 'mvn -Dmaven.test.failure.ignore clean package'
                     } else {
                         echo "Maven build skipped as 'mvn_build' parameter is false."
                     }
