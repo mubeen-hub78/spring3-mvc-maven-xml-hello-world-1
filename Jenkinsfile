@@ -23,7 +23,7 @@ pipeline {
         stage("Clone Code") {
             steps {
                 script {
-                    git branch: "${params.BRANCH}", url: 'https://github.com/betawins/parametirize-job.git';
+                    git branch: "${params.BRANCH}", url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git';
                 }
             }
         }
