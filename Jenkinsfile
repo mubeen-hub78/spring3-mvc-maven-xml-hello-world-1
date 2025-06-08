@@ -3,12 +3,12 @@ pipeline {
 
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'origin/master', name: 'BRANCH', type: 'PT_BRANCH', description: 'Select the Git branch to build'
-        booleanParam(defaultValue: false, description: '', name: 'mvn_build')
-        booleanParam(defaultValue: false, description: '', name: 'publish_to_nexus')
+        booleanParam(defaultValue: false, description: 'Set true to perform Maven build', name: 'mvn_build')
+        booleanParam(defaultValue: false, description: 'Set true to publish artifacts to Nexus', name: 'publish_to_nexus')
     }
 
     tools {
-        maven "Maven" // This "Maven" must match the name configured in Jenkins > Global Tool Configuration
+        maven "Maven"  // Must match Jenkins Global Tool Configuration exactly
     }
 
     environment {
@@ -23,7 +23,7 @@ pipeline {
         stage("Clone Code") {
             steps {
                 script {
-                    git branch: "${params.BRANCH.replace('origin/', '')}", url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git';
+                    git branch: "${params.BRANCH.replace('origin/', '')}", url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
                 }
             }
         }
@@ -32,7 +32,7 @@ pipeline {
             steps {
                 script {
                     if (params.mvn_build) {
-                        // Removed hardcoded path, relying on Jenkins 'tools' definition to set PATH
+                        echo "Starting Maven build..."
                         sh 'mvn -Dmaven.test.failure.ignore clean package'
                     } else {
                         echo "Maven build skipped as 'mvn_build' parameter is false."
@@ -45,13 +45,14 @@ pipeline {
             steps {
                 script {
                     if (params.publish_to_nexus) {
-                        pom = readMavenPom file: "pom.xml";
-                        filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
+                        def pom = readMavenPom file: "pom.xml"
+                        def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
 
-                        if(filesByGlob.size() > 0) {
-                            artifactPath = filesByGlob[0].path;
+                        if (filesByGlob.size() > 0) {
+                            def artifactPath = filesByGlob[0].path
 
-                            echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
+                            echo "*** Found artifact file: ${artifactPath}"
+                            echo "*** GroupId: ${pom.groupId}, Packaging: ${pom.packaging}, Version: ${pom.version}"
 
                             nexusArtifactUploader(
                                 nexusVersion: NEXUS_VERSION,
@@ -75,9 +76,9 @@ pipeline {
                                         type: "pom"
                                     ]
                                 ]
-                            );
+                            )
                         } else {
-                            error "*** No artifact found in target directory with packaging: ${pom.packaging}";
+                            error "*** No artifact found in target directory with packaging: ${pom.packaging}"
                         }
                     } else {
                         echo "Publish to Nexus skipped as 'publish_to_nexus' parameter is false."
