@@ -14,9 +14,9 @@ pipeline {
     environment {
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
-        NEXUS_URL = "52.23.219.98:8081"
-        NEXUS_REPOSITORY = "ncodeit-helloworld"
-        NEXUS_CREDENTIAL_ID = "nexus_credentials"
+        NEXUS_URL = "52.23.219.98:8081" // Your Nexus URL
+        NEXUS_REPOSITORY = "maven-snapshots" // Changed to a common snapshot repository name
+        NEXUS_CREDENTIAL_ID = "nexus_credentials" // Your Nexus credentials ID
     }
 
     stages {
@@ -57,7 +57,7 @@ pipeline {
                                 protocol: NEXUS_PROTOCOL,
                                 nexusUrl: NEXUS_URL,
                                 groupId: pom.groupId,
-                                version: "${BUILD_NUMBER}",
+                                version: "${BUILD_NUMBER}", // Using Jenkins' BUILD_NUMBER for snapshot versions
                                 repository: NEXUS_REPOSITORY,
                                 credentialsId: NEXUS_CREDENTIAL_ID,
                                 artifacts: [
