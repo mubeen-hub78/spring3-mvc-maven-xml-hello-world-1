@@ -20,9 +20,22 @@
         <jacoco.version>0.8.11</jacoco.version>
         <junit.version>4.13.2</junit.version>
         <servlet.api.version>4.0.1</servlet.api.version>
+        <spring.version>5.3.32</spring.version>
     </properties>
 
     <dependencies>
+        <!-- Spring MVC and Core dependencies -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
         <!-- Servlet API for WAR packaging -->
         <dependency>
             <groupId>javax.servlet</groupId>
