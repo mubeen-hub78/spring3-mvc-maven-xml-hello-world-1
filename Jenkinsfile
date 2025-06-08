@@ -1,23 +1,23 @@
 pipeline {
   agent {
     docker {
-      image 'maven:3.8.6-openjdk-17'  // official Maven + JDK image
-      reuseNode true                  // use the same workspace inside container
+      image 'maven:3.6.3-openjdk-17'  // includes Maven 3.6.3 + Java 17
+      reuseNode true                  // reuse workspace across container stages
     }
   }
 
   environment {
-    NEXUS_VERSION     = "nexus3"
-    NEXUS_PROTOCOL    = "http"
-    NEXUS_URL         = "52.23.219.98:8081"
-    NEXUS_REPOSITORY  = "maven-snapshots"
-    NEXUS_CREDENTIAL_ID = "nexus_credentials"
+    NEXUS_VERSION       = 'nexus3'
+    NEXUS_PROTOCOL      = 'http'
+    NEXUS_URL           = '52.23.219.98:8081'
+    NEXUS_REPOSITORY    = 'maven-snapshots'
+    NEXUS_CREDENTIAL_ID = 'nexus_credentials'
   }
 
   parameters {
-    booleanParam(defaultValue: true, name: 'mvn_build', description: 'Run Maven Build?')
+    booleanParam(defaultValue: true, name: 'mvn_build', description: 'Run Maven build?')
     booleanParam(defaultValue: true, name: 'publish_to_nexus', description: 'Publish artifact to Nexus?')
-    gitParameter branchFilter: 'origin/(.*)', defaultValue: 'origin/master', name: 'BRANCH', type: 'PT_BRANCH', description: 'Select Git branch'
+    gitParameter(branchFilter: 'origin/(.*)', defaultValue: 'origin/master', name: 'BRANCH', type: 'PT_BRANCH', description: 'Select Git branch')
   }
 
   stages {
@@ -42,11 +42,14 @@ pipeline {
         script {
           def pom = readMavenPom file: 'pom.xml'
           def artifacts = findFiles(glob: "target/*.${pom.packaging}")
+
           if (artifacts.length == 0) {
-            error "❌ No .${pom.packaging} found in target/, check pom.artifactId/version"
+            error "❌ No .${pom.packaging} found in target/, check pom.artifactId and packaging"
           }
+
           def artifactPath = artifacts[0].path
           echo "*** Found artifact at: ${artifactPath}"
+
           nexusArtifactUploader(
             nexusVersion: NEXUS_VERSION,
             protocol: NEXUS_PROTOCOL,
@@ -66,11 +69,7 @@ pipeline {
   }
 
   post {
-    success {
-      echo '✅ Pipeline completed successfully.'
-    }
-    failure {
-      echo '❌ Pipeline failed. See logs above.'
-    }
+    success { echo '✅ Pipeline completed successfully.' }
+    failure { echo '❌ Pipeline failed — check logs above.' }
   }
 }
