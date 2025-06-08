@@ -11,7 +11,7 @@ pipeline {
     NEXUS_PROTOCOL = 'http'
     NEXUS_URL = '52.23.219.98:8081' // Your Nexus URL
     NEXUS_REPOSITORY = 'maven-snapshots' // Your Nexus snapshot repository
-    NEXUS_CREDENTIAL_ID = 'Nexus-cred' // UPDATED: Your Jenkins credentials ID for Nexus
+    NEXUS_CREDENTIAL_ID = 'Nexus-cred' // Your Jenkins credentials ID for Nexus
   }
 
   parameters {
@@ -54,7 +54,10 @@ pipeline {
           def artifactPath = artifacts[0].path
           echo "*** Found artifact at: ${artifactPath}"
 
-          // Use withCredentials to explicitly load username and password
+          // The withCredentials block is useful if you need to use the username/password in a shell command.
+          // For nexusArtifactUploader, it often just needs the credentialsId.
+          // Keeping withCredentials here for demonstration, but it might not be strictly necessary
+          // if only nexusArtifactUploader uses the credentials.
           withCredentials([usernamePassword(credentialsId: NEXUS_CREDENTIAL_ID, usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
             nexusArtifactUploader(
               nexusVersion: NEXUS_VERSION,
@@ -63,9 +66,8 @@ pipeline {
               groupId: pom.groupId,
               version: "${BUILD_NUMBER}", // Uses Jenkins' built-in BUILD_NUMBER for versioning
               repository: NEXUS_REPOSITORY,
-              // Pass username and password directly from the withCredentials block
-              username: NEXUS_USERNAME,
-              password: NEXUS_PASSWORD,
+              // Removed explicit username/password and rely solely on credentialsId
+              credentialsId: NEXUS_CREDENTIAL_ID, // Ensure this is present
               artifacts: [
                 [ artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging ],
                 [ artifactId: pom.artifactId, classifier: '', file: 'pom.xml', type: 'pom' ]
