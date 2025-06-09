@@ -9,7 +9,7 @@ pipeline {
   environment {
     NEXUS_VERSION = 'nexus3'
     NEXUS_PROTOCOL = 'http'
-    NEXUS_URL = '3.84.202.51:8081' // Updated to confirmed IP
+    NEXUS_URL = '3.84.202.51:8081'
     NEXUS_REPOSITORY = 'maven-snapshots'
     NEXUS_CREDENTIAL_ID = 'Nexus-cred'
   }
@@ -18,7 +18,6 @@ pipeline {
     booleanParam(defaultValue: true, name: 'mvn_build', description: 'Run Maven build?')
     booleanParam(defaultValue: true, name: 'publish_to_nexus', description: 'Publish artifact to Nexus?')
     gitParameter(branchFilter: 'origin/(.*)', defaultValue: 'origin/master', name: 'BRANCH', type: 'PT_BRANCH', description: 'Select Git branch')
-    // Parameter for Nexus URL, defaulting to the confirmed IP
     string(name: 'NEXUS_URL_PARAM', defaultValue: '3.84.202.51:8081', description: 'Base URL for Nexus Repository Manager (e.g., ip:port/)')
     string(name: 'NEXUS_REPOSITORY_PARAM', defaultValue: 'maven-snapshots', description: 'Name of the Nexus repository to deploy artifacts to (e.g., maven-releases, maven-snapshots)')
     string(name: 'NEXUS_CREDENTIAL_ID_PARAM', defaultValue: 'Nexus-cred', description: 'Jenkins Credential ID for Nexus authentication')
@@ -62,9 +61,9 @@ pipeline {
             nexusArtifactUploader(
               nexusVersion: NEXUS_VERSION,
               protocol: NEXUS_PROTOCOL,
-              nexusUrl: NEXUS_URL, // This uses the environment variable, which gets its value from the parameter
+              nexusUrl: NEXUS_URL,
               groupId: pom.groupId,
-              version: "${BUILD_NUMBER}",
+              version: "${BUILD_NUMBER}-SNAPSHOT", // <--- THIS IS THE KEY CHANGE
               repository: NEXUS_REPOSITORY,
               credentialsId: NEXUS_CREDENTIAL_ID,
               artifacts: [
