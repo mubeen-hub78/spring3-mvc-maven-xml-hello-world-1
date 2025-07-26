@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -24,7 +24,7 @@
     </properties>
 
     <dependencies>
-        <!-- Spring MVC and Core dependencies -->
+        <!-- Spring MVC and Core -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
@@ -36,7 +36,7 @@
             <version>${spring.version}</version>
         </dependency>
 
-        <!-- Servlet API for WAR packaging -->
+        <!-- Servlet API for WAR -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -44,7 +44,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JUnit for unit testing -->
+        <!-- JUnit for testing -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -54,10 +54,12 @@
     </dependencies>
 
     <build>
+        <!-- Standard Maven source dirs -->
         <sourceDirectory>src</sourceDirectory>
         <testSourceDirectory>src/com/room/sample/view/Test</testSourceDirectory>
+
         <plugins>
-            <!-- Maven Compiler Plugin -->
+            <!-- Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -71,7 +73,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven WAR Plugin -->
+            <!-- WAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -82,14 +84,14 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Surefire Plugin for running unit tests -->
+            <!-- Surefire for unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
 
-            <!-- JaCoCo Plugin for code coverage -->
+            <!-- JaCoCo coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -97,20 +99,15 @@
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
+                        <goals><goal>prepare-agent</goal></goals>
                     </execution>
                     <execution>
                         <id>report</id>
                         <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
+                        <goals><goal>report</goal></goals>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
@@ -118,12 +115,12 @@
         <repository>
             <id>nexus-releases</id>
             <name>Nexus Releases</name>
-            <url>http://52.23.219.98:8081/repository/maven-releases/</url>
+            <url>http://54.198.153.55:8081/repository/devops/</url>
         </repository>
         <snapshotRepository>
             <id>nexus-snapshots</id>
             <name>Nexus Snapshots</name>
-            <url>http://52.23.219.98:8081/repository/maven-snapshots/</url>
+            <url>http://54.198.153.55:8081/repository/devops/</url>
         </snapshotRepository>
     </distributionManagement>
 
