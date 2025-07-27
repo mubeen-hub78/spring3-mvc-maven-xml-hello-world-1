@@ -3,8 +3,6 @@ pipeline {
 
     parameters {
         string(name: 'GIT_BRANCH', defaultValue: 'master', description: 'Git branch to build')
-        string(name: 'NEXUS_REPOSITORY', defaultValue: 'devops', description: 'Nexus repository name')
-        string(name: 'VERSION_SUFFIX', defaultValue: '-SNAPSHOT', description: 'Version suffix (e.g., -SNAPSHOT or empty for releases)')
         string(name: 'SLACK_CHANNEL', defaultValue: '#new-channel', description: 'Slack channel for notifications')
         string(name: 'SONARQUBE_PROJECT_KEY', defaultValue: 'com.javatpoint:simplecustomerapp-sp', description: 'SonarQube project key')
         string(name: 'SONARQUBE_PROJECT_NAME', defaultValue: 'simplecustomerapp-parameterized', description: 'SonarQube project display name')
@@ -15,11 +13,7 @@ pipeline {
     }
 
     environment {
-        NEXUS_VERSION       = 'nexus3'
-        NEXUS_PROTOCOL      = 'http'
-        NEXUS_URL           = '107.23.211.86:8081'
-        NEXUS_CREDENTIAL_ID = 'Nexus_server'
-        SONARQUBE_SERVER    = 'MySonarQube'
+        SONARQUBE_SERVER = 'MySonarQube'
     }
 
     stages {
@@ -47,48 +41,9 @@ pipeline {
             }
         }
 
-        stage('Publish to Nexus') {
+        stage('Deploy to Nexus') {
             steps {
-                script {
-                    def pom = readMavenPom file: 'pom.xml'
-                    def artifacts = findFiles(glob: "target/*.${pom.packaging}")
-
-                    if (artifacts.size() == 0) {
-                        error "No artifact found for packaging type: ${pom.packaging}"
-                    }
-
-                    def artifactPath = artifacts[0].path
-                    def versionString = "${env.BUILD_NUMBER}${params.VERSION_SUFFIX}"
-
-                    // Define artifacts list separately
-                    def artifactList = [
-                        [
-                            artifactId: pom.artifactId,
-                            classifier: '',
-                            file: artifactPath,
-                            type: pom.packaging
-                        ],
-                        [
-                            artifactId: pom.artifactId,
-                            classifier: '',
-                            file: 'pom.xml',
-                            type: 'pom'
-                        ]
-                    ]
-
-                    withCredentials([usernamePassword(credentialsId: "${env.NEXUS_CREDENTIAL_ID}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                        nexusArtifactUploader(
-                            nexusVersion: "${env.NEXUS_VERSION}",
-                            protocol: "${env.NEXUS_PROTOCOL}",
-                            nexusUrl: "${env.NEXUS_URL}",
-                            groupId: pom.groupId,
-                            version: versionString,
-                            repository: "${params.NEXUS_REPOSITORY}",
-                            credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
-                            artifacts: artifactList
-                        )
-                    }
-                }
+                sh 'mvn clean deploy -DskipTests'
             }
         }
     }
@@ -99,9 +54,6 @@ pipeline {
         }
         failure {
             slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
-        }
-        unstable {
-            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'warning', message: "⚠️ UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
         }
     }
 }
