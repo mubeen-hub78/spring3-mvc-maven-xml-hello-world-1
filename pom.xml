@@ -9,6 +9,7 @@
     <artifactId>simplecustomerapp-sp</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
+
     <name>simplecustomerapp-sp</name>
     <url>http://107.23.211.86/</url>
 
