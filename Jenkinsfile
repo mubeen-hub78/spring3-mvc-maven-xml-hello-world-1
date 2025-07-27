@@ -1,17 +1,24 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'MAVEN_HOME'
+        jdk 'JDK11'
+    }
+
     environment {
         SONARQUBE = 'MySonar'
-        NEXUS_URL = 'http://107.23.211.86:8081/repository/devops/'
-        APP_NAME = 'simplecustomerapp-parallel'
+        NEXUS = 'Nexus_server'
+        GIT_REPO = 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
+        GIT_BRANCH = 'master'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'feature-1.1',
-                    url: 'https://github.com/sabair0509/sabear_simplecutomerapp.git'
+                git branch: "${GIT_BRANCH}",
+                    url: "${GIT_REPO}",
+                    credentialsId: 'Github_server'
             }
         }
 
@@ -19,28 +26,20 @@ pipeline {
             parallel {
                 stage('Build') {
                     steps {
-                        sh '/usr/bin/mvn clean package -DskipTests'
+                        sh 'mvn clean package -DskipTests'
                     }
                 }
-
                 stage('SonarQube Analysis') {
                     steps {
                         withSonarQubeEnv("${SONARQUBE}") {
-                            sh "/usr/bin/mvn sonar:sonar -Dsonar.projectKey=com.javatpoint:${APP_NAME}"
+                            sh "mvn sonar:sonar -Dsonar.projectKey=simplecustomerapp-sp-parallel"
                         }
                     }
                 }
-
                 stage('Deploy to Nexus') {
                     steps {
-                        withCredentials([usernamePassword(credentialsId: 'Nexus_server',
-                                                          usernameVariable: 'NEXUS_USER',
-                                                          passwordVariable: 'NEXUS_PASS')]) {
-                            sh """
-                                /usr/bin/mvn deploy -DskipTests \
-                                -Dnexus.username=$NEXUS_USER \
-                                -Dnexus.password=$NEXUS_PASS
-                            """
+                        withCredentials([usernamePassword(credentialsId: "${NEXUS}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                            sh 'mvn deploy -DskipTests'
                         }
                     }
                 }
@@ -50,12 +49,10 @@ pipeline {
 
     post {
         success {
-            slackSend channel: '#new-channel', color: 'good',
-                message: "✅ Build & Deploy SUCCESS for ${APP_NAME}"
+            slackSend(channel: '#new-channel', color: 'good', tokenCredentialId: 'slack', message: "Parallel Pipeline SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
         }
         failure {
-            slackSend channel: '#new-channel', color: 'danger',
-                message: "❌ Build FAILED for ${APP_NAME}"
+            slackSend(channel: '#new-channel', color: 'danger', tokenCredentialId: 'slack', message: "Parallel Pipeline FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
         }
     }
 }
