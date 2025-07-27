@@ -6,11 +6,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.javatpoint</groupId>
-    <artifactId>simplecustomerapp-sp</artifactId>
+    <artifactId>simplecustomerapp-sp-parallel</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
-    <name>simplecustomerapp-sp</name>
+    <name>simplecustomerapp-sp-parallel</name>
     <url>http://107.23.211.86/</url>
 
     <properties>
@@ -65,6 +65,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <webappDirectory>${project.basedir}/WebContent</webappDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -94,10 +95,12 @@
     <distributionManagement>
         <repository>
             <id>nexus</id>
+            <name>Nexus Releases</name>
             <url>http://107.23.211.86:8081/repository/devops/</url>
         </repository>
         <snapshotRepository>
             <id>nexus</id>
+            <name>Nexus Snapshots</name>
             <url>http://107.23.211.86:8081/repository/devops/</url>
         </snapshotRepository>
     </distributionManagement>
