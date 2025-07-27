@@ -2,54 +2,49 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME'
+        maven 'Maven3'
+        jdk 'JDK11'
     }
 
     environment {
-        SONARQUBE_SERVER = 'MySonarQube'
-        NEXUS_REPO_URL = 'http://107.23.211.86:8081/repository/devops/'
-        GIT_REPO = 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
-        SONAR_PROJECT_KEY = 'com.javatpoint:simplecustomerapp-sp-parallel'
-        SONAR_PROJECT_NAME = 'simplecustomerapp-parallel'
+        SONARQUBE = 'MySonar'
+        NEXUS_URL = 'http://107.23.211.86:8081/repository/devops/'
+        APP_NAME = 'simplecustomerapp-parallel'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: "${env.GIT_REPO}"
+                git branch: 'feature-1.1',
+                    url: 'https://github.com/sabair0509/sabear_simplecutomerapp.git'
             }
         }
 
         stage('Parallel Stages') {
-            parallel {
+            parallel failFast: false, stages: {
                 stage('Build') {
                     steps {
-                        sh 'mvn clean install -Dmaven.test.failure.ignore=true'
+                        sh 'mvn clean package -DskipTests'
                     }
                 }
 
                 stage('SonarQube Analysis') {
                     steps {
-                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONARQUBE_TOKEN')]) {
-                            withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                                sh """
-                                    mvn sonar:sonar \
-                                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                    -Dsonar.projectName=${SONAR_PROJECT_NAME} \
-                                    -Dsonar.login=$SONARQUBE_TOKEN
-                                """
-                            }
+                        withSonarQubeEnv("${SONARQUBE}") {
+                            sh "mvn sonar:sonar -Dsonar.projectKey=com.javatpoint:${APP_NAME}"
                         }
                     }
                 }
 
                 stage('Deploy to Nexus') {
                     steps {
-                        withCredentials([usernamePassword(credentialsId: 'Nexus_server', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                        withCredentials([usernamePassword(credentialsId: 'Nexus_server',
+                                                          usernameVariable: 'NEXUS_USER',
+                                                          passwordVariable: 'NEXUS_PASS')]) {
                             sh """
                                 mvn clean deploy -DskipTests \
-                                -DaltDeploymentRepository=nexus::default::${NEXUS_REPO_URL} \
-                                -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
+                                -Dnexus.username=$NEXUS_USER \
+                                -Dnexus.password=$NEXUS_PASS
                             """
                         }
                     }
@@ -60,10 +55,12 @@ pipeline {
 
     post {
         success {
-            slackSend(channel: '#new-channel', color: 'good', message: "✅ SUCCESS: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (<${env.BUILD_URL}|Open>)")
+            slackSend channel: '#new-channel', color: 'good',
+                message: "✅ Build & Deploy SUCCESS for ${APP_NAME}"
         }
         failure {
-            slackSend(channel: '#new-channel', color: 'danger', message: "❌ FAILURE: ${env.JOB_NAME} [${env.BUILD_NUMBER}] (<${env.BUILD_URL}|Open>)")
+            slackSend channel: '#new-channel', color: 'danger',
+                message: "❌ Build FAILED for ${APP_NAME}"
         }
     }
 }
