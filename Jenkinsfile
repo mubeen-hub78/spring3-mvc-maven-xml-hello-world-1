@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven3'
-        jdk 'JDK11'
-    }
-
     environment {
         SONARQUBE = 'MySonar'
         NEXUS_URL = 'http://107.23.211.86:8081/repository/devops/'
@@ -20,18 +15,18 @@ pipeline {
             }
         }
 
-        stage('Parallel Stages') {
-            parallel failFast: false, stages: {
+        stage('Parallel Jobs') {
+            parallel {
                 stage('Build') {
                     steps {
-                        sh 'mvn clean package -DskipTests'
+                        sh '/usr/bin/mvn clean package -DskipTests'
                     }
                 }
 
                 stage('SonarQube Analysis') {
                     steps {
                         withSonarQubeEnv("${SONARQUBE}") {
-                            sh "mvn sonar:sonar -Dsonar.projectKey=com.javatpoint:${APP_NAME}"
+                            sh "/usr/bin/mvn sonar:sonar -Dsonar.projectKey=com.javatpoint:${APP_NAME}"
                         }
                     }
                 }
@@ -42,7 +37,7 @@ pipeline {
                                                           usernameVariable: 'NEXUS_USER',
                                                           passwordVariable: 'NEXUS_PASS')]) {
                             sh """
-                                mvn clean deploy -DskipTests \
+                                /usr/bin/mvn deploy -DskipTests \
                                 -Dnexus.username=$NEXUS_USER \
                                 -Dnexus.password=$NEXUS_PASS
                             """
