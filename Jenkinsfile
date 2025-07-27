@@ -9,11 +9,11 @@ pipeline {
     }
 
     tools {
-        maven 'MAVEN_HOME'  // Make sure Maven tool installed and named MAVEN_HOME in Jenkins global tools
+        maven 'MAVEN_HOME'
     }
-    
+
     environment {
-        SONARQUBE_SERVER = 'MySonarQube'    // SonarQube server name configured in Jenkins
+        SONARQUBE_SERVER = 'MySonarQube'
     }
 
     stages {
@@ -22,13 +22,11 @@ pipeline {
                 git branch: "${params.GIT_BRANCH}", url: "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
             }
         }
-
         stage('Build') {
             steps {
                 sh 'mvn -Dmaven.test.failure.ignore=true clean install'
             }
         }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
@@ -40,7 +38,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy to Nexus') {
             steps {
                 sh 'mvn clean deploy -DskipTests'
