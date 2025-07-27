@@ -9,19 +9,18 @@ pipeline {
     }
 
     tools {
-        maven 'MAVEN_HOME' // Ensure Maven is installed/configured under this name
+        maven 'MAVEN_HOME'  // Make sure Maven is configured with this name
     }
 
     environment {
-        SONARQUBE_SERVER = 'MySonarQube' // SonarQube server name configured in Jenkins
-        NEXUS_REPO_URL = 'http://107.23.211.86:8081/repository/devops/' // Nexus Repo URL
+        SONARQUBE_SERVER = 'MySonarQube'  // SonarQube server configured in Jenkins
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: "${params.GIT_BRANCH}",
-                    url: "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
+                    url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
             }
         }
 
@@ -33,43 +32,30 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONARQUBE_TOKEN')]) {
-                    withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                        sh """mvn sonar:sonar \
-                             -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
-                             -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME} \
-                             -Dsonar.login=$SONARQUBE_TOKEN"""
-                    }
+                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+                    sh """
+                       mvn sonar:sonar \
+                       -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
+                       -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME}
+                    """
                 }
             }
         }
 
         stage('Deploy to Nexus') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Nexus_server', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    // Using Maven deploy with authentication set via environment variables or settings.xml
-                    // Assuming your Maven settings.xml is configured to pick up these env vars or credentials
-                    sh """
-                       mvn clean deploy -DskipTests \
-                       -Dnexus.username=$NEXUS_USER \
-                       -Dnexus.password=$NEXUS_PASS \
-                       -DaltDeploymentRepository=nexus::default::${NEXUS_REPO_URL}
-                    """
-                }
+                // Deploy using Maven's default settings.xml on Jenkins agent (must have credentials there!)
+                sh 'mvn clean deploy -DskipTests'
             }
         }
     }
 
     post {
         success {
-            withCredentials([string(credentialsId: 'slack', variable: 'SLACK_TOKEN')]) {
-                slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', token: SLACK_TOKEN, message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
-            }
+            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
         }
         failure {
-            withCredentials([string(credentialsId: 'slack', variable: 'SLACK_TOKEN')]) {
-                slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', token: SLACK_TOKEN, message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
-            }
+            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
         }
     }
 }
