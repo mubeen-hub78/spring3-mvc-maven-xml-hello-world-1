@@ -1,47 +1,75 @@
 pipeline {
     agent any
+
     tools {
         maven 'MAVEN_HOME'
     }
+
     environment {
-        SONARQUBE = 'sonar'
-        NEXUS = 'Nexus_server'
-        APP_NAME = 'simplecustomerapp-sp-parallel'
+        NEXUS_VERSION       = "${env.NEXUS_VERSION ?: 'nexus3'}"
+        NEXUS_PROTOCOL      = "${env.NEXUS_PROTOCOL ?: 'http'}"
+        NEXUS_URL           = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
+        NEXUS_REPOSITORY    = "${env.NEXUS_REPOSITORY ?: 'devops'}"
+        NEXUS_CREDENTIAL_ID = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
+
+        SONARQUBE_SERVER    = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"
+
+        SLACK_CHANNEL       = "${env.SLACK_CHANNEL ?: '#new-channel'}"
+
+        REPO_URL            = "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
+        GIT_BRANCH          = "master"
     }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
+                git branch: "${env.GIT_BRANCH}", url: "${env.REPO_URL}"
             }
         }
 
-        stage('Parallel Jobs') {
+        stage('Build & Analysis') {
             parallel {
                 stage('Build') {
                     steps {
-                        sh "mvn clean package -DskipTests"
+                        sh 'mvn -Dmaven.test.failure.ignore=true clean install'
                     }
                 }
 
                 stage('SonarQube Analysis') {
                     steps {
-                        withSonarQubeEnv("${SONARQUBE}") {
-                            sh "mvn sonar:sonar -Dsonar.projectKey=${APP_NAME} -Dsonar.projectName=${APP_NAME}"
+                        withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+                            sh 'mvn sonar:sonar'
                         }
                     }
                 }
+            }
+        }
 
-                stage('Deploy to Nexus') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: "${NEXUS}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                            sh '''
-                                mvn deploy -DskipTests \
-                                -DaltDeploymentRepository=nexus::default::http://107.23.211.86:8081/repository/devops \
-                                -Dnexus.username=$USER -Dnexus.password=$PASS
-                            '''
-                        }
+        stage('Publish to Nexus') {
+            steps {
+                script {
+                    def pom = readMavenPom file: 'pom.xml'
+                    def artifacts = findFiles(glob: "target/*.${pom.packaging}")
+
+                    if (artifacts.size() == 0) {
+                        error "No artifact found for packaging type: ${pom.packaging}"
                     }
+
+                    def artifactPath = artifacts[0].path
+
+                    nexusArtifactUploader(
+                        nexusVersion: "${env.NEXUS_VERSION}",
+                        protocol: "${env.NEXUS_PROTOCOL}",
+                        nexusUrl: "${env.NEXUS_URL}",
+                        groupId: pom.groupId,
+                        version: "${env.BUILD_NUMBER}-SNAPSHOT",
+                        repository: "${env.NEXUS_REPOSITORY}",
+                        credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
+                        artifacts: [
+                            [artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging],
+                            [artifactId: pom.artifactId, classifier: '', file: 'pom.xml', type: 'pom']
+                        ]
+                    )
                 }
             }
         }
@@ -49,10 +77,13 @@ pipeline {
 
     post {
         success {
-            slackSend(channel: '#new-channel', color: 'good', message: "Build Successful for ${APP_NAME}")
+            slackSend(channel: "${env.SLACK_CHANNEL}", color: 'good', message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
         }
         failure {
-            slackSend(channel: '#new-channel', color: 'danger', message: "Build Failed for ${APP_NAME}")
+            slackSend(channel: "${env.SLACK_CHANNEL}", color: 'danger', message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+        }
+        unstable {
+            slackSend(channel: "${env.SLACK_CHANNEL}", color: 'warning', message: "⚠️ UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
         }
     }
 }
