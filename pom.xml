@@ -49,8 +49,6 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>src</sourceDirectory>
-        <testSourceDirectory>src/com/room/sample/view/Test</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -59,9 +57,6 @@
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
-                    <excludes>
-                        <exclude>com/room/sample/view/Test/**</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -70,7 +65,6 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <webappDirectory>${project.basedir}/WebContent</webappDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -100,12 +94,10 @@
     <distributionManagement>
         <repository>
             <id>nexus</id>
-            <name>Nexus Releases</name>
             <url>http://107.23.211.86:8081/repository/devops/</url>
         </repository>
         <snapshotRepository>
             <id>nexus</id>
-            <name>Nexus Snapshots</name>
             <url>http://107.23.211.86:8081/repository/devops/</url>
         </snapshotRepository>
     </distributionManagement>
