@@ -2,16 +2,20 @@ pipeline {
     agent any
 
     tools {
+        // Your Maven tool name configured in Jenkins
         maven "${env.MVN_TOOL_NAME ?: 'MVN_HOME'}"
     }
 
     environment {
         NEXUS_VERSION        = "${env.NEXUS_VERSION ?: 'nexus3'}"
         NEXUS_PROTOCOL       = "${env.NEXUS_PROTOCOL ?: 'http'}"
-        NEXUS_URL            = "${env.NEXUS_URL ?: '54.198.153.55:8081'}"
+        // Use new Nexus host and port
+        NEXUS_URL            = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
         NEXUS_REPOSITORY     = "${env.NEXUS_REPOSITORY ?: 'devops'}"
         NEXUS_CREDENTIAL_ID  = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
-        SONARQUBE_SERVER     = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"
+
+        SONARQUBE_SERVER     = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"  // Ensure this server is configured with URL http://107.23.211.86:9000 in Jenkins config
+
         SLACK_CHANNEL        = "${env.SLACK_CHANNEL ?: '#new-channel'}"
 
         REPO_URL             = "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
