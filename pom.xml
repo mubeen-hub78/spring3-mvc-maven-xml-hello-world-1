@@ -7,7 +7,7 @@
 
     <groupId>com.javatpoint</groupId>
     <artifactId>simplecustomerapp-sp</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version> <!-- Use SNAPSHOT for snapshots, change to release version for releases -->
     <packaging>war</packaging>
     <name>simplecustomerapp-sp</name>
     <url>http://107.23.211.86/</url>
@@ -113,12 +113,12 @@
         <repository>
             <id>nexus-releases</id>
             <name>Nexus Releases</name>
-            <url>http://107.23.211.86:8081/repository/devops/</url>
+            <url>http://107.23.211.86:8081/repository/devops-releases/</url> <!-- Release repo URL -->
         </repository>
         <snapshotRepository>
             <id>nexus-snapshots</id>
             <name>Nexus Snapshots</name>
-            <url>http://107.23.211.86:8081/repository/devops/</url>
+            <url>http://107.23.211.86:8081/repository/devops-snapshots/</url> <!-- Snapshot repo URL -->
         </snapshotRepository>
     </distributionManagement>
 
