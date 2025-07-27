@@ -19,37 +19,31 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: "${params.GIT_BRANCH}", url: "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
+                git branch: "${params.GIT_BRANCH}", url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
             }
         }
 
         stage('Build') {
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
-                    sh "mvn -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true clean install"
-                }
+                sh 'mvn -Dmaven.test.failure.ignore=true clean install'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
-                        sh """
-                           mvn -s $MAVEN_SETTINGS sonar:sonar \
-                           -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
-                           -Dsonar.projectName='${params.SONARQUBE_PROJECT_NAME}'
-                        """
-                    }
+                    sh """
+                       mvn sonar:sonar \
+                       -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
+                       -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME}
+                    """
                 }
             }
         }
 
         stage('Deploy to Nexus') {
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
-                    sh "mvn -s $MAVEN_SETTINGS -DskipTests deploy"
-                }
+                sh 'mvn clean deploy -DskipTests'
             }
         }
     }
