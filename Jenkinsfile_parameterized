@@ -60,6 +60,22 @@ pipeline {
                     def artifactPath = artifacts[0].path
                     def versionString = "${env.BUILD_NUMBER}${params.VERSION_SUFFIX}"
 
+                    // Define artifacts list separately
+                    def artifactList = [
+                        [
+                            artifactId: pom.artifactId,
+                            classifier: '',
+                            file: artifactPath,
+                            type: pom.packaging
+                        ],
+                        [
+                            artifactId: pom.artifactId,
+                            classifier: '',
+                            file: 'pom.xml',
+                            type: 'pom'
+                        ]
+                    ]
+
                     withCredentials([usernamePassword(credentialsId: "${env.NEXUS_CREDENTIAL_ID}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                         nexusArtifactUploader(
                             nexusVersion: "${env.NEXUS_VERSION}",
@@ -69,20 +85,7 @@ pipeline {
                             version: versionString,
                             repository: "${params.NEXUS_REPOSITORY}",
                             credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
-                            artifacts: [
-                                [
-                                    artifactId: pom.artifactId,
-                                    classifier: '',
-                                    file: artifactPath,
-                                    type: pom.packaging
-                                ],
-                                [
-                                    artifactId: pom.artifactId,
-                                    classifier: '',
-                                    file: 'pom.xml',
-                                    type: 'pom'
-                                ]
-                            ]
+                            artifacts: artifactList
                         )
                     }
                 }
