@@ -9,51 +9,76 @@ pipeline {
     }
 
     tools {
-        maven 'MAVEN_HOME'
+        maven 'MAVEN_HOME'  // Ensure Maven is configured in Jenkins as MAVEN_HOME
     }
 
     environment {
-        SONARQUBE_SERVER = 'MySonarQube'
+        SONARQUBE_SERVER = 'MySonarQube' // SonarQube server name configured in Jenkins
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: "${params.GIT_BRANCH}", url: "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
+                git branch: "${params.GIT_BRANCH}",
+                    url: 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true clean install'
+                sh 'mvn clean install -Dmaven.test.failure.ignore=true'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh """
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
-                        -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME}
-                    """
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONARQUBE_TOKEN')]) {
+                    withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+                        sh """
+                            mvn sonar:sonar \
+                             -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
+                             -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME} \
+                             -Dsonar.login=$SONARQUBE_TOKEN
+                        """
+                    }
                 }
             }
         }
 
         stage('Deploy to Nexus') {
             steps {
-                sh 'mvn clean deploy -DskipTests'
+                withCredentials([usernamePassword(credentialsId: 'Nexus_server', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                        cat > settings.xml <<EOF
+                        <settings>
+                          <servers>
+                            <server>
+                              <id>nexus</id>
+                              <username>${NEXUS_USER}</username>
+                              <password>${NEXUS_PASS}</password>
+                            </server>
+                          </servers>
+                        </settings>
+                        EOF
+                    """
+                    sh 'mvn clean deploy -DskipTests --settings settings.xml'
+                }
             }
         }
     }
 
     post {
         success {
-            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            withCredentials([string(credentialsId: 'slack', variable: 'SLACK_TOKEN')]) {
+                slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', token: SLACK_TOKEN,
+                    message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            }
         }
         failure {
-            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            withCredentials([string(credentialsId: 'slack', variable: 'SLACK_TOKEN')]) {
+                slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', token: SLACK_TOKEN,
+                    message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            }
         }
     }
 }
