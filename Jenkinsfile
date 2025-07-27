@@ -9,11 +9,12 @@ pipeline {
     }
 
     tools {
-        maven 'MAVEN_HOME'  // Make sure Maven is configured with this name
+        maven 'MAVEN_HOME' // Ensure your Jenkins Maven tool is named MAVEN_HOME
     }
 
     environment {
-        SONARQUBE_SERVER = 'MySonarQube'  // SonarQube server configured in Jenkins
+        SONARQUBE_SERVER = 'MySonarQube'                                  // Your SonarQube server in Jenkins
+        NEXUS_REPO_URL = 'http://107.23.211.86:8081/repository/devops/'  // Your Nexus repo URL
     }
 
     stages {
@@ -26,36 +27,46 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true clean install'
+                sh 'mvn clean install -Dmaven.test.failure.ignore=true'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh """
-                       mvn sonar:sonar \
-                       -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
-                       -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME}
-                    """
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONARQUBE_TOKEN')]) {
+                    withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
+                        sh """mvn sonar:sonar \
+                         -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
+                         -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME} \
+                         -Dsonar.login=$SONARQUBE_TOKEN"""
+                    }
                 }
             }
         }
 
         stage('Deploy to Nexus') {
             steps {
-                // Deploy using Maven's default settings.xml on Jenkins agent (must have credentials there!)
-                sh 'mvn clean deploy -DskipTests'
+                withCredentials([usernamePassword(credentialsId: 'Nexus_server', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                       mvn clean deploy -DskipTests \
+                         -DaltDeploymentRepository=nexus::default::${NEXUS_REPO_URL} \
+                         -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
+                    """
+                }
             }
         }
     }
 
     post {
         success {
-            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            withCredentials([string(credentialsId: 'slack', variable: 'SLACK_TOKEN')]) {
+                slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', token: SLACK_TOKEN, message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            }
         }
         failure {
-            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            withCredentials([string(credentialsId: 'slack', variable: 'SLACK_TOKEN')]) {
+                slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', token: SLACK_TOKEN, message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+            }
         }
     }
 }
