@@ -7,7 +7,15 @@
 
     <groupId>com.javatpoint</groupId>
     <artifactId>simplecustomerapp-sp</artifactId>
-    <version>0.1-SNAPSHOT</version> <!-- Use SNAPSHOT for snapshots, change to release version for releases -->
+
+    <!-- 
+      Set version to:
+      - 11-SNAPSHOT if your Nexus repo 'devops' is snapshot type,
+      - or 11 if it is a release repo. 
+      Adjust this based on your Nexus configuration.
+    -->
+    <version>0.1-SNAPSHOT</version>
+
     <packaging>war</packaging>
     <name>simplecustomerapp-sp</name>
     <url>http://107.23.211.86/</url>
@@ -111,15 +119,14 @@
 
     <distributionManagement>
         <repository>
-            <id>nexus-releases</id>
-            <name>Nexus Releases</name>
-            <url>http://107.23.211.86:8081/repository/devops-releases/</url> <!-- Release repo URL -->
+            <id>nexus</id>
+            <name>Nexus Repository</name>
+            <url>http://107.23.211.86:8081/repository/devops/</url>
         </repository>
         <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <name>Nexus Snapshots</name>
-            <url>http://107.23.211.86:8081/repository/devops-snapshots/</url> <!-- Snapshot repo URL -->
+            <id>nexus</id>
+            <name>Nexus Repository</name>
+            <url>http://107.23.211.86:8081/repository/devops/</url>
         </snapshotRepository>
     </distributionManagement>
-
 </project>
