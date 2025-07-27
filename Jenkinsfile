@@ -2,19 +2,18 @@ pipeline {
     agent any
 
     tools {
-        // Your Maven tool name configured in Jenkins
-        maven "${env.MVN_TOOL_NAME ?: 'MVN_HOME'}"
+        maven 'MVN_HOME'
     }
 
     environment {
         NEXUS_VERSION        = "${env.NEXUS_VERSION ?: 'nexus3'}"
         NEXUS_PROTOCOL       = "${env.NEXUS_PROTOCOL ?: 'http'}"
-        // Use new Nexus host and port
+        // Removed invalid comment here
         NEXUS_URL            = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
         NEXUS_REPOSITORY     = "${env.NEXUS_REPOSITORY ?: 'devops'}"
         NEXUS_CREDENTIAL_ID  = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
 
-        SONARQUBE_SERVER     = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"  // Ensure this server is configured with URL http://107.23.211.86:9000 in Jenkins config
+        SONARQUBE_SERVER     = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"  /* Ensure this server is configured with URL http://107.23.211.86:9000 in Jenkins config */
 
         SLACK_CHANNEL        = "${env.SLACK_CHANNEL ?: '#new-channel'}"
 
