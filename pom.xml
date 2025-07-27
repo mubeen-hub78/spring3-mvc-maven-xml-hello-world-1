@@ -16,7 +16,6 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <jacoco.version>0.8.11</jacoco.version>
         <junit.version>4.13.2</junit.version>
         <servlet.api.version>4.0.1</servlet.api.version>
@@ -100,13 +99,14 @@
     <distributionManagement>
         <repository>
             <id>nexus</id>
-            <name>Nexus Repository</name>
+            <name>Nexus Releases</name>
             <url>http://107.23.211.86:8081/repository/devops/</url>
         </repository>
         <snapshotRepository>
             <id>nexus</id>
-            <name>Nexus Repository</name>
+            <name>Nexus Snapshots</name>
             <url>http://107.23.211.86:8081/repository/devops/</url>
         </snapshotRepository>
     </distributionManagement>
+
 </project>
