@@ -2,23 +2,22 @@ pipeline {
     agent any
 
     tools {
-        maven 'MVN_HOME'
+        maven 'MAVEN_HOME'  // Use the exact Maven tool name configured in Jenkins
     }
 
     environment {
-        NEXUS_VERSION        = "${env.NEXUS_VERSION ?: 'nexus3'}"
-        NEXUS_PROTOCOL       = "${env.NEXUS_PROTOCOL ?: 'http'}"
-        // Removed invalid comment here
-        NEXUS_URL            = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
-        NEXUS_REPOSITORY     = "${env.NEXUS_REPOSITORY ?: 'devops'}"
-        NEXUS_CREDENTIAL_ID  = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
+        NEXUS_VERSION       = "${env.NEXUS_VERSION ?: 'nexus3'}"
+        NEXUS_PROTOCOL      = "${env.NEXUS_PROTOCOL ?: 'http'}"
+        NEXUS_URL           = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
+        NEXUS_REPOSITORY    = "${env.NEXUS_REPOSITORY ?: 'devops'}"
+        NEXUS_CREDENTIAL_ID = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
 
-        SONARQUBE_SERVER     = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"  /* Ensure this server is configured with URL http://107.23.211.86:9000 in Jenkins config */
+        SONARQUBE_SERVER    = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"
 
-        SLACK_CHANNEL        = "${env.SLACK_CHANNEL ?: '#new-channel'}"
+        SLACK_CHANNEL       = "${env.SLACK_CHANNEL ?: '#new-channel'}"
 
-        REPO_URL             = "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
-        GIT_BRANCH           = "master"
+        REPO_URL            = "https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git"
+        GIT_BRANCH          = "master"
     }
 
     stages {
