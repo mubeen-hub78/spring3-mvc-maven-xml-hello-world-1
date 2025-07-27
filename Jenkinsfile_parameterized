@@ -15,11 +15,11 @@ pipeline {
     }
 
     environment {
-        NEXUS_VERSION       = "${env.NEXUS_VERSION ?: 'nexus3'}"
-        NEXUS_PROTOCOL      = "${env.NEXUS_PROTOCOL ?: 'http'}"
-        NEXUS_URL           = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
-        NEXUS_CREDENTIAL_ID = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
-        SONARQUBE_SERVER    = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"
+        NEXUS_VERSION       = 'nexus3'
+        NEXUS_PROTOCOL      = 'http'
+        NEXUS_URL           = '107.23.211.86:8081'
+        NEXUS_CREDENTIAL_ID = 'Nexus_server'
+        SONARQUBE_SERVER    = 'MySonarQube'
     }
 
     stages {
@@ -38,7 +38,11 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh "mvn sonar:sonar -Dsonar.projectKey='${params.SONARQUBE_PROJECT_KEY}' -Dsonar.projectName='${params.SONARQUBE_PROJECT_NAME}'"
+                    sh """
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
+                        -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME}
+                    """
                 }
             }
         }
@@ -66,8 +70,18 @@ pipeline {
                             repository: "${params.NEXUS_REPOSITORY}",
                             credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
                             artifacts: [
-                                [artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging],
-                                [artifactId: pom.artifactId, classifier: '', file: 'pom.xml', type: 'pom']
+                                [
+                                    artifactId: pom.artifactId,
+                                    classifier: '',
+                                    file: artifactPath,
+                                    type: pom.packaging
+                                ],
+                                [
+                                    artifactId: pom.artifactId,
+                                    classifier: '',
+                                    file: 'pom.xml',
+                                    type: 'pom'
+                                ]
                             ]
                         )
                     }
