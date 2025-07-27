@@ -3,24 +3,17 @@ pipeline {
 
     parameters {
         string(name: 'GIT_BRANCH', defaultValue: 'master', description: 'Git branch to build')
-        string(name: 'NEXUS_REPOSITORY', defaultValue: 'devops', description: 'Nexus repository name')
-        string(name: 'VERSION_SUFFIX', defaultValue: '-SNAPSHOT', description: 'Version suffix (e.g., -SNAPSHOT or empty for releases)')
         string(name: 'SLACK_CHANNEL', defaultValue: '#new-channel', description: 'Slack channel for notifications')
         string(name: 'SONARQUBE_PROJECT_KEY', defaultValue: 'com.javatpoint:simplecustomerapp-sp', description: 'SonarQube project key')
-        string(name: 'SONARQUBE_PROJECT_NAME', defaultValue: 'Simple Customer App', description: 'SonarQube project display name')
+        string(name: 'SONARQUBE_PROJECT_NAME', defaultValue: 'simplecustomerapp-parameterized', description: 'SonarQube project display name')
     }
 
     tools {
-        maven 'MAVEN_HOME'  // Make sure Maven tool in Jenkins is named MAVEN_HOME
+        maven 'MAVEN_HOME'  // Make sure Maven tool installed and named MAVEN_HOME in Jenkins global tools
     }
-
+    
     environment {
-        NEXUS_VERSION       = "${env.NEXUS_VERSION ?: 'nexus3'}"
-        NEXUS_PROTOCOL      = "${env.NEXUS_PROTOCOL ?: 'http'}"
-        NEXUS_URL           = "${env.NEXUS_URL ?: '107.23.211.86:8081'}"
-        NEXUS_CREDENTIAL_ID = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
-
-        SONARQUBE_SERVER    = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"
+        SONARQUBE_SERVER = 'MySonarQube'    // SonarQube server name configured in Jenkins
     }
 
     stages {
@@ -39,33 +32,28 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
-                    sh "mvn sonar:sonar -Dsonar.projectKey='${params.SONARQUBE_PROJECT_KEY}' -Dsonar.projectName='${params.SONARQUBE_PROJECT_NAME}'"
+                    sh """
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=${params.SONARQUBE_PROJECT_KEY} \
+                        -Dsonar.projectName=${params.SONARQUBE_PROJECT_NAME}
+                    """
                 }
             }
         }
 
-        stage('Publish to Nexus') {
+        stage('Deploy to Nexus') {
             steps {
-                script {
-                    def pom = readMavenPom file: 'pom.xml'
-                    def artifacts = findFiles(glob: "target/*.${pom.packaging}")
+                sh 'mvn clean deploy -DskipTests'
+            }
+        }
+    }
 
-                    if (artifacts.size() == 0) {
-                        error "No artifact found for packaging type: ${pom.packaging}"
-                    }
-
-                    def artifactPath = artifacts[0].path
-                    def versionString = "${env.BUILD_NUMBER}${params.VERSION_SUFFIX}"
-
-                    withCredentials([usernamePassword(credentialsId: "${env.NEXUS_CREDENTIAL_ID}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                        nexusArtifactUploader(
-                            nexusVersion: "${env.NEXUS_VERSION}",
-                            protocol: "${env.NEXUS_PROTOCOL}",
-                            nexusUrl: "${env.NEXUS_URL}",
-                            groupId: pom.groupId,
-                            version: versionString,
-                            repository: "${params.NEXUS_REPOSITORY}",
-                            credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
-                            artifacts: [
-                                [artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging],
-                                [artifactId: pom.artifactId, classifier
+    post {
+        success {
+            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'good', message: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+        }
+        failure {
+            slackSend(channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "❌ FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (<${env.BUILD_URL}|Open>)")
+        }
+    }
+}
