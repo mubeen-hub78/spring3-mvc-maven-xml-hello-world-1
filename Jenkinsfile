@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME'  // Use the exact Maven tool name configured in Jenkins
+        maven 'MAVEN_HOME'  // Maven tool name configured in Jenkins; adjust if needed
     }
 
     environment {
@@ -59,7 +59,7 @@ pipeline {
                             protocol: "${env.NEXUS_PROTOCOL}",
                             nexusUrl: "${env.NEXUS_URL}",
                             groupId: pom.groupId,
-                            version: env.BUILD_NUMBER,
+                            version: "${env.BUILD_NUMBER}-SNAPSHOT",  // Append -SNAPSHOT for snapshot repo
                             repository: "${env.NEXUS_REPOSITORY}",
                             credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
                             artifacts: [
