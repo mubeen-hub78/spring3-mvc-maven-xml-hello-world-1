@@ -14,7 +14,7 @@ pipeline {
         NEXUS_CREDENTIAL_ID = "${env.NEXUS_CREDENTIAL_ID ?: 'Nexus_server'}"
 
         // SonarQube configuration
-        SONARQUBE_SERVER    = "${env.SONARQUBE_SERVER ?: 'MySonarQube'}"
+        SONARQUBE_SERVER    = "${env.SONARQUBE_SERVER ?: 'MySonar'}"
 
         // Slack notification
         SLACK_CHANNEL       = "${env.SLACK_CHANNEL ?: '#new-channel'}"
