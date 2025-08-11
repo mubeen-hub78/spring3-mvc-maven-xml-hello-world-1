@@ -15,7 +15,7 @@ pipeline {
 
         // Sonar
         SONARQUBE_SERVER    = 'MySonar'
-        SONARQUBE_URL       = 'http://35.175.252.12/'
+        SONARQUBE_URL       = 'http://35.175.252.12:9000'
 
         // Slack
         SLACK_CHANNEL       = '#new-channel'
