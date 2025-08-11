@@ -13,28 +13,28 @@ pipeline {
         NEXUS_REPOSITORY    = 'devops'
         NEXUS_CREDENTIAL_ID = 'Nexus_server'
 
-        // Sonar
+        // SonarQube
         SONARQUBE_SERVER    = 'MySonar'
         SONARQUBE_URL       = 'http://35.175.252.12:9000'
 
-        // Slack
+        // Slack channel
         SLACK_CHANNEL       = '#new-channel'
 
-        // Application source repo
+        // App source Git repo
         APP_REPO_URL        = 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
         APP_GIT_BRANCH      = 'master'
 
-        // Kubernetes manifests repo
+        // Kubernetes manifests Git repo
         MANIFEST_REPO_URL   = 'https://github.com/mubeen-hub78/ArgoCD-Java.git'
         MANIFEST_GIT_BRANCH = 'main'
         MANIFEST_CRED_ID    = 'git-manifest-cred'
 
-        // Docker
+        // Docker info
         DOCKER_IMAGE_NAME   = 'mubeendochub/java-app'
         DOCKER_REGISTRY     = 'docker.io'
         DOCKER_CREDENTIALS_ID = 'Docker-cred'
 
-        // ArgoCD
+        // ArgoCD info
         ARGO_APP_NAME       = 'java-app'
         ARGO_SERVER         = '54.172.117.25:31630'
         ARGO_CRED_ID        = 'argocd-password'
