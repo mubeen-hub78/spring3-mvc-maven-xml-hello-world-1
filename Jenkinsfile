@@ -9,7 +9,7 @@ pipeline {
         // Nexus
         NEXUS_VERSION       = 'nexus3'
         NEXUS_PROTOCOL      = 'http'
-        NEXUS_URL           = '13.217.7.157:8081'
+        NEXUS_URL           = '35.175.252.12:8081'
         NEXUS_REPOSITORY    = 'devops'
         NEXUS_CREDENTIAL_ID = 'Nexus_server'
 
