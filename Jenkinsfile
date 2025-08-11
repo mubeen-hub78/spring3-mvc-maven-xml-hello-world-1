@@ -1,58 +1,40 @@
 pipeline {
     agent any
-
     tools {
         maven 'MAVEN_HOME'
     }
-
     environment {
-        // Nexus
         NEXUS_VERSION       = 'nexus3'
         NEXUS_PROTOCOL      = 'http'
         NEXUS_URL           = '35.175.252.12:8081'
         NEXUS_REPOSITORY    = 'devops'
         NEXUS_CREDENTIAL_ID = 'Nexus_server'
-
-        // SonarQube
         SONARQUBE_SERVER    = 'MySonar'
         SONARQUBE_URL       = 'http://35.175.252.12:9000'
-
-        // Slack channel
         SLACK_CHANNEL       = '#new-channel'
-
-        // App source Git repo
         APP_REPO_URL        = 'https://github.com/mubeen-hub78/spring3-mvc-maven-xml-hello-world-1.git'
         APP_GIT_BRANCH      = 'master'
-
-        // Kubernetes manifests Git repo
         MANIFEST_REPO_URL   = 'https://github.com/mubeen-hub78/ArgoCD-Java.git'
         MANIFEST_GIT_BRANCH = 'main'
         MANIFEST_CRED_ID    = 'git-manifest-cred'
-
-        // Docker info
         DOCKER_IMAGE_NAME   = 'mubeendochub/java-app'
         DOCKER_REGISTRY     = 'docker.io'
         DOCKER_CREDENTIALS_ID = 'Docker-cred'
-
-        // ArgoCD info
         ARGO_APP_NAME       = 'java-app'
         ARGO_SERVER         = '54.172.117.25:31630'
         ARGO_CRED_ID        = 'argocd-password'
     }
-
     stages {
         stage('Checkout App Code') {
             steps {
                 git branch: "${env.APP_GIT_BRANCH}", url: "${env.APP_REPO_URL}"
             }
         }
-
         stage('Maven Build') {
             steps {
                 sh 'mvn -Dmaven.test.failure.ignore=true clean install'
             }
         }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${env.SONARQUBE_SERVER}") {
@@ -60,17 +42,14 @@ pipeline {
                 }
             }
         }
-
         stage('Publish to Nexus') {
             steps {
                 script {
                     def pom = readMavenPom file: 'pom.xml'
                     def artifacts = findFiles(glob: "target/*.${pom.packaging}")
-
                     if (artifacts.size() == 0) {
                         error "No artifact found for packaging type: ${pom.packaging}"
                     }
-
                     nexusArtifactUploader(
                         nexusVersion: env.NEXUS_VERSION,
                         protocol: env.NEXUS_PROTOCOL,
@@ -87,44 +66,41 @@ pipeline {
                 }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
             }
         }
-
         stage('Push Docker Image') {
             steps {
                 script {
                     def fullImageName = "${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
                     sh "docker tag ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${fullImageName}"
-
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin ${env.DOCKER_REGISTRY}"
                     }
-
                     sh "docker push ${fullImageName}"
                 }
             }
         }
-
         stage('Update Manifest Repo with New Image Tag') {
             steps {
                 dir('manifests') {
                     git branch: "${env.MANIFEST_GIT_BRANCH}", url: "${env.MANIFEST_REPO_URL}", credentialsId: "${env.MANIFEST_CRED_ID}"
-                    sh """
-                        sed -i 's|image: ${env.DOCKER_IMAGE_NAME}:.*|image: ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}|' deployment.yaml
-                        git config user.email "jenkins@ci.local"
-                        git config user.name "Jenkins CI"
-                        git add deployment.yaml
-                        git commit -m "Update image tag to ${env.BUILD_NUMBER}"
-                        git push origin ${env.MANIFEST_GIT_BRANCH}
-                    """
+                    withCredentials([usernamePassword(credentialsId: env.MANIFEST_CRED_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh """
+                            sed -i 's|image: ${env.DOCKER_IMAGE_NAME}:.*|image: ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}|' deployment.yaml
+                            git config user.email "jenkins@ci.local"
+                            git config user.name "Jenkins CI"
+                            git add deployment.yaml
+                            git commit -m "Update image tag to ${env.BUILD_NUMBER}" || echo "No changes to commit"
+                            git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/mubeen-hub78/ArgoCD-Java.git
+                            git push origin ${env.MANIFEST_GIT_BRANCH}
+                        """
+                    }
                 }
             }
         }
-
         stage('Deploy via ArgoCD') {
             steps {
                 withCredentials([string(credentialsId: env.ARGO_CRED_ID, variable: 'ARGOCD_PASS')]) {
@@ -137,7 +113,6 @@ pipeline {
             }
         }
     }
-
     post {
         success {
             slackSend(channel: "${env.SLACK_CHANNEL}", color: 'good',
