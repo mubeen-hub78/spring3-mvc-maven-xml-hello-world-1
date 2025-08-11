@@ -77,7 +77,7 @@ pipeline {
                     def fullImageName = "${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
                     sh "docker tag ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${fullImageName}"
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin ${env.DOCKER_REGISTRY}"
+                        sh '''echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin ${DOCKER_REGISTRY}'''
                     }
                     sh "docker push ${fullImageName}"
                 }
@@ -88,15 +88,15 @@ pipeline {
                 dir('manifests') {
                     git branch: "${env.MANIFEST_GIT_BRANCH}", url: "${env.MANIFEST_REPO_URL}", credentialsId: "${env.MANIFEST_CRED_ID}"
                     withCredentials([usernamePassword(credentialsId: env.MANIFEST_CRED_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                        sh """
-                            sed -i 's|image: ${env.DOCKER_IMAGE_NAME}:.*|image: ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}|' deployment.yaml
+                        sh '''
+                            sed -i "s|image: ${DOCKER_IMAGE_NAME}:.*|image: ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}|" deployment.yaml
                             git config user.email "jenkins@ci.local"
                             git config user.name "Jenkins CI"
                             git add deployment.yaml
-                            git commit -m "Update image tag to ${env.BUILD_NUMBER}" || echo "No changes to commit"
+                            git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
                             git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/mubeen-hub78/ArgoCD-Java.git
-                            git push origin ${env.MANIFEST_GIT_BRANCH}
-                        """
+                            git push origin ${MANIFEST_GIT_BRANCH}
+                        '''
                     }
                 }
             }
@@ -104,11 +104,11 @@ pipeline {
         stage('Deploy via ArgoCD') {
             steps {
                 withCredentials([string(credentialsId: env.ARGO_CRED_ID, variable: 'ARGOCD_PASS')]) {
-                    sh """
-                        argocd login ${env.ARGO_SERVER} --username admin --password $ARGOCD_PASS --insecure
-                        argocd app sync ${env.ARGO_APP_NAME}
-                        argocd app wait ${env.ARGO_APP_NAME} --timeout 600
-                    """
+                    sh '''
+                        argocd login ${ARGO_SERVER} --username admin --password $ARGOCD_PASS --insecure
+                        argocd app sync ${ARGO_APP_NAME}
+                        argocd app wait ${ARGO_APP_NAME} --timeout 600
+                    '''
                 }
             }
         }
